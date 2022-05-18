@@ -20,7 +20,7 @@ def update_text(renderer, surface):
     # Create a texture for the surface and render it to the screen
     tx = sdl2.ext.Texture(renderer, surface)
     renderer.clear(BLACK_RGBA)
-    renderer.copy(tx, dstrect=(10, 10))
+    renderer.copy(tx, dstrect=(10, 10)) # here to modify position of text
     renderer.present()
 
 
