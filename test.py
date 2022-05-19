@@ -9,21 +9,16 @@ import sys
 import sdl2.ext
 from sdl2.sdlttf import TTF_FontLineSkip
 from sdl2.ext import FontTTF
-
 filepath = os.path.abspath(os.path.dirname(__file__))
 RESOURCES = sdl2.ext.Resources(filepath, "resources")
 BLACK_RGBA = (0, 0, 0, 255)
 WHITE_RGBA = (255, 255, 255, 255)
-
-
 def update_text(renderer, surface):
     # Create a texture for the surface and render it to the screen
     tx = sdl2.ext.Texture(renderer, surface)
     renderer.clear(BLACK_RGBA)
     renderer.copy(tx, dstrect=(10, 10)) # here to modify position of text
     renderer.present()
-
-
 def run():
     # Initialize SDL2 and create a Window and Renderer
     sdl2.ext.init()
@@ -35,18 +30,15 @@ def run():
         )
     renderer = sdl2.ext.Renderer(window, flags=renderflags)
     window.show()
-
     # Create and initialize a font to render text with
     fontpath = RESOURCES.get_path("tuffy.ttf")
     font = FontTTF(fontpath, "20px", WHITE_RGBA)
-
     # Add some additional font styles
     styles = ['default', 'small', 'red', 'large', 'bg_fill']
     font.add_style('small', '10px', WHITE_RGBA)
     font.add_style('red', '20px', (255, 0, 0))
     font.add_style('large', '35px', WHITE_RGBA)
     font.add_style('bg_fill', '20px', BLACK_RGBA, WHITE_RGBA)
-
     # Initialize font rendering options
     line_height = TTF_FontLineSkip(font.get_ttf_font())
     alignments = ["left", "center", "right"]
@@ -57,15 +49,12 @@ def run():
     id_story=0
     # Set a default string with which to render text
     txt = story[id_story]
-
     # Render the text and present it on the screen
     txt_rendered = font.render_text(txt, width=780)
     update_text(renderer, txt_rendered)
-
     # Tell SDL2 to start reading Text Editing events. This allows for proper
     # handling of unicode characters and modifier keys.
     sdl2.SDL_StartTextInput()
-
     # Create a simple event loop and wait for keydown, text editing, and quit events.
     running = True
     while running:
@@ -75,7 +64,6 @@ def run():
             if event.type == sdl2.SDL_QUIT:
                 running = False
                 break
-
             # Handle non-standard keyboard events
             elif event.type == sdl2.SDL_KEYDOWN:
                 update_txt = True
@@ -84,7 +72,6 @@ def run():
                     id_story += 1
                     txt = story[id_story]
                
-
             # If txt has changed since the start of the loop, update the renderer
             if update_txt:
                 align = alignments[align_idx]
@@ -93,19 +80,38 @@ def run():
                     txt, style, width=780, line_h=line_height, align=align
                 )
                 update_text(renderer, txt_rendered)
-
     # Now that we're done, close everything down and quit SDL2
     font.close()
     renderer.destroy()
     window.close()
     sdl2.ext.quit()
     return 0
-
 if __name__ == "__main__":
     sys.exit(run())
-
-
 """
+BLACK = sdl2.ext.Color(0, 0, 0)
+WHITE = sdl2.ext.Color(255, 255, 255)
+class SoftwareRenderSystem(sdl2.ext.SoftwareSpriteRenderSystem):
+    def __init__(self, window):
+        super(SoftwareRenderSystem, self).__init__(window)
+
+    def render(self, components):
+        sdl2.ext.fill(self.surface, BLACK)
+        super(SoftwareRenderSystem, self).render(components)
+
+
+class TextureRenderSystem(sdl2.ext.TextureSpriteRenderSystem):
+    def __init__(self, renderer):
+        super(TextureRenderSystem, self).__init__(renderer)
+        self.renderer = renderer
+
+    def render(self, components):
+        tmp = self.renderer.color
+        self.renderer.color = BLACK
+        self.renderer.clear()
+        self.renderer.color = tmp
+        super(TextureRenderSystem, self).render(components)
+
 
 # A callback for the Button.motion event.
 def onmotion(button, event):
@@ -129,8 +135,6 @@ def onreleased(button, event):
 def onpressed(button, event):
     button.surface = sdl2.ext.image.load_bmp(RESOURCES.get_path("button"+str(button.id)+"_down.bmp"))
 
-def onnoevent(button, event):
-    print("no event")
 
 def ge_create_button(uifactory, bname, id_compo, posx, posy):
     button = uifactory.from_image(sdl2.ext.BUTTON,RESOURCES.get_path(bname+str(id_compo)+".bmp"),id_compo)
@@ -144,13 +148,22 @@ def ge_create_button(uifactory, bname, id_compo, posx, posy):
     return button
 
 
+class Narative_box():
+    def __init__(self, sprite, text, posx=400, posy=400 ):
+        self.sprite = sprite
+        self.sprite.position = posx, posy
+        self.text = text
+
+        
+        
 RESOURCES = sdl2.ext.Resources(__file__, "resources")
 def run():
 
     sdl2.ext.init()
     window = sdl2.ext.Window("UI Elements", size=(800, 600))
     window.show()
-
+    world = sdl2.ext.World()
+    
     if "-hardware" in sys.argv:
         print("Using hardware acceleration")
         renderer = sdl2.ext.Renderer(window)
@@ -158,18 +171,25 @@ def run():
     else:
         print("Using software rendering")
         factory = sdl2.ext.SpriteFactory(sdl2.ext.SOFTWARE)
-
-   
+        
+    if factory.sprite_type == sdl2.ext.SOFTWARE:
+        spriterenderer = SoftwareRenderSystem(window)
+    else:
+        spriterenderer = TextureRenderSystem(renderer)
+    world.add_system(spriterenderer)
+    ####-------------------- things that do not change go up
+    
     uifactory = sdl2.ext.UIFactory(factory)
 
     buttons = []
     
-    for i in range(0,3):
-        buttons.append(ge_create_button(uifactory,"button",i,20,i*75))
-
     
+    for i in range(0,3):
+        buttons.append(ge_create_button(uifactory,"button",0,20,i*75))
 
+    nara_box = Narative_box(factory.from_color(WHITE, size=(200, 200)), 0, 250)
 
+# todo : DISPLQY NARABOX
     spriterenderer = factory.create_sprite_render_system(window)
 
 
@@ -189,6 +209,7 @@ def run():
         # Render all user interface elements on the window.
         spriterenderer.render((buttons))
 
+        
     sdl2.ext.quit()
     return 0
 
