@@ -22,7 +22,7 @@ TEXTENTRY = 0x0004
 
 
 
-def _compose_button(obj,id_compo):
+def _compose_button(obj, id_compo, id_link, text_obj):
     """Binds button attributes to the object, so it can be properly
     processed by the UIProcessor.
 
@@ -30,6 +30,9 @@ def _compose_button(obj,id_compo):
     inheritance and composition issues and should not be used by user
     code.
     """
+    obj.depth = 10
+    obj.text_obj = text_obj
+    obj.id_link = id_link
     obj.id = id_compo
     obj.uitype = BUTTON
     obj.state = RELEASED
@@ -100,11 +103,11 @@ class UIFactory(object):
         self.spritefactory = spritefactory
         self.default_args = kwargs
 
-    def from_image(self, uitype, fname, id_compo):
+    def from_image(self, uitype, fname, id_compo, id_link,text_obj):
         """Creates a new UI element from the passed image file."""
         sprite = self.spritefactory.from_image(fname)
         if uitype == BUTTON:
-            _compose_button(sprite,id_compo)
+            _compose_button(sprite,id_compo, id_link, text_obj)
         elif uitype == CHECKBUTTON:
             _compose_checkbutton(sprite,id_compo)
         elif uitype == TEXTENTRY:
@@ -114,11 +117,12 @@ class UIFactory(object):
             raise ValueError("uitype must be a valid UI type identifier")
         return sprite
 
-    def from_surface(self, uitype, surface, id_compo, free=False):
+    def from_surface(self, uitype, surface, id_compo, id_link, text_obj, free=False):
         """Creates a new UI element from the passed SDL surface."""
         sprite = self.spritefactory.from_surface(surface, free)
+        sprite.depth = 10
         if uitype == BUTTON:
-            _compose_button(sprite,id_compo)
+            _compose_button(sprite,id_compo, id_link, text_obj)
         elif uitype == CHECKBUTTON:
             _compose_checkbutton(sprite,id_compo)
         elif uitype == TEXTENTRY:
@@ -128,11 +132,12 @@ class UIFactory(object):
             raise ValueError("uitype must be a valid UI type identifier")
         return sprite
 
-    def from_object(self, uitype, obj, id_compo):#WIP willprobably never use it but here docs : https://pysdl2.readthedocs.io/en/rel_0_9_7/modules/sdl2ext_sprite.html#sdl2.ext.SpriteFactory.from_object 
+    def from_object(self, uitype, obj, id_compo, id_link, text_obj):#WIP willprobably never use it but here docs : https://pysdl2.readthedocs.io/en/rel_0_9_7/modules/sdl2ext_sprite.html#sdl2.ext.SpriteFactory.from_object 
         """Creates a new UI element from an arbitrary object."""
         sprite = self.spritefactory.from_object(obj)
+        sprite.depth = 10
         if uitype == BUTTON:
-            _compose_button(sprite,id_compo)
+            _compose_button(sprite,id_compo, id_link, text_obj)
         elif uitype == CHECKBUTTON:
             _compose_checkbutton(sprite,id_compo)
         elif uitype == TEXTENTRY:
@@ -142,11 +147,12 @@ class UIFactory(object):
             raise ValueError("uitype must be a valid UI type identifier")
         return sprite
 
-    def from_color(self, uitype, color, size, id_compo):
+    def from_color(self, uitype, color, size, id_compo, id_link, text_obj):
         """Creates a new UI element using a certain color."""
         sprite = self.spritefactory.from_color(color, size)
+        sprite.depth = 10
         if uitype == BUTTON:
-            _compose_button(sprite,id_compo)
+            _compose_button(sprite,id_compo, id_link, text_obj)
         elif uitype == CHECKBUTTON:
             _compose_checkbutton(sprite,id_compo)
         elif uitype == TEXTENTRY:
@@ -161,7 +167,8 @@ class UIFactory(object):
         args = self.default_args.copy()
         args.update(kwargs)
         sprite = self.spritefactory.create_sprite(**args)
-        _compose_button(sprite,id_compo)
+        sprite.depth = 10
+        _compose_button(sprite,id_compo, id_link, text_obj)
         return sprite
 
     def create_checkbutton(self, id_compo, **kwargs):
@@ -170,6 +177,7 @@ class UIFactory(object):
         args = self.default_args.copy()
         args.update(kwargs)
         sprite = self.spritefactory.create_sprite(**args)
+        sprite.depth = 10
         _compose_checkbutton(sprite,id_compo)
         return sprite
 
@@ -178,6 +186,7 @@ class UIFactory(object):
         args = self.default_args.copy()
         args.update(kwargs)
         sprite = self.spritefactory.create_sprite(**args)
+        sprite.depth = 10
         _compose_textentry(sprite,id_compo)
         return sprite
 
